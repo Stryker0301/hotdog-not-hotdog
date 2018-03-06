@@ -1,0 +1,6 @@
+.vscode/
+images/
+logs/
+MNIST-data/
+model/
+test_images/
