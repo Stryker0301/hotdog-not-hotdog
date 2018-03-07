@@ -18,39 +18,57 @@ labels = {'apple': 0,
 def cnn_model_fn(features, labels, mode):
     input_layer = tf.reshape(features['x'], [-1, 64, 64, 1])
 
+    print('input_layer')
+
     # Input tensor --> [batch_size, 64, 64, 1]
     # Output tensor --> [batch_size, 64, 64, 32]
     conv1 = tf.layers.conv2d(input_layer, filters=32,
                              kernel_size=[5, 5], padding='same', activation=tf.nn.relu)
 
+    print('conv1')
+
     # Input tensor --> [batch_size, 64, 64, 32]
     # Output tensor --> [batch_size, 32, 32, 32]
     pool1 = tf.layers.max_pooling2d(conv1, pool_size=[2, 2], strides=2)
+
+    print('pool1')
 
     # Input tensor --> [batch_size, 32, 32, 32]
     # Output tensor --> [batch_size, 32, 32, 64]
     conv2 = tf.layers.conv2d(pool1, filters=64,
                              kernel_size=[5, 5], padding='same', activation=tf.nn.relu)
 
+    print('conv2')
+
     # Input tensor --> [batch_size, 32, 32, 64]
     # Output tensor --> [batch_size, 16, 16, 64]
     pool2 = tf.layers.max_pooling2d(conv2, pool_size=[2, 2], strides=2)
 
+    print('pool2')
+
     # Input tensor --> [batch_size, 16, 16, 64]
     # Output tensor --> [batch_size, 7 * 7 * 64]
     pool2_flat = tf.reshape(pool2, [-1, 16 * 16 * 64])
+
+    print('pool2_flat')
 
     # Input tensor --> [batch_size, 7 * 7 * 64]
     # Output tensor --> [batch_size, 1024]
     dense = tf.layers.dense(
         inputs=pool2_flat, units=1024, activation=tf.nn.relu)
 
+    print('dense')
+
     dropout = tf.layers.dropout(
         inputs=dense, rate=0.3, training=mode == tf.estimator.ModeKeys.TRAIN)
+
+    print('dropout')
 
     # Input tensor --> [batch_size, 1024]
     # Output tensor --> [batch_size, 10]
     logits = tf.layers.dense(inputs=dropout, units=10)
+
+    print('logits')
 
     predictions = {
         'classes': tf.argmax(input=logits, axis=1, name='classes_tensor'),
