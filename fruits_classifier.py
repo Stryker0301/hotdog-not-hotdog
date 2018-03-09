@@ -18,57 +18,88 @@ labels = {'apple': 0,
 def cnn_model_fn(features, labels, mode):
     input_layer = tf.reshape(features['x'], [-1, 64, 64, 1])
 
-    print('input_layer')
+    print('Input Layer:{}'.format(input_layer.shape))
 
     # Input tensor --> [batch_size, 64, 64, 1]
     # Output tensor --> [batch_size, 64, 64, 32]
     conv1 = tf.layers.conv2d(input_layer, filters=32,
                              kernel_size=[5, 5], padding='same', activation=tf.nn.relu)
 
-    print('conv1')
+    print('conv1:{}'.format(conv1.shape))
 
     # Input tensor --> [batch_size, 64, 64, 32]
     # Output tensor --> [batch_size, 32, 32, 32]
     pool1 = tf.layers.max_pooling2d(conv1, pool_size=[2, 2], strides=2)
 
-    print('pool1')
+    print('pool1:{}'.format(pool1.shape))
 
     # Input tensor --> [batch_size, 32, 32, 32]
     # Output tensor --> [batch_size, 32, 32, 64]
     conv2 = tf.layers.conv2d(pool1, filters=64,
                              kernel_size=[5, 5], padding='same', activation=tf.nn.relu)
 
-    print('conv2')
+    print('conv2:{}'.format(conv2.shape))
 
     # Input tensor --> [batch_size, 32, 32, 64]
     # Output tensor --> [batch_size, 16, 16, 64]
     pool2 = tf.layers.max_pooling2d(conv2, pool_size=[2, 2], strides=2)
 
-    print('pool2')
+    print('pool2:{}'.format(pool2.shape))
 
     # Input tensor --> [batch_size, 16, 16, 64]
-    # Output tensor --> [batch_size, 7 * 7 * 64]
-    pool2_flat = tf.reshape(pool2, [-1, 16 * 16 * 64])
+    # Output tensor --> [batch_size, 16, 16, 128]
+    conv3 = tf.layers.conv2d(pool2, filters=128,
+                             kernel_size=[5, 5], padding='same', activation=tf.nn.relu)
 
-    print('pool2_flat')
+    print('conv3:{}'.format(conv3.shape))
+
+    # Input tensor --> [batch_size, 16, 16, 128]
+    # Output tensor --> [batch_size, 8, 8, 128]
+    pool3 = tf.layers.max_pooling2d(conv3, pool_size=[2, 2], strides=2)
+
+    print('pool3:{}'.format(pool3.shape))
+
+    # Input tensor --> [batch_size, 8, 8, 128]
+    # Output tensor --> [batch_size, 7 * 7 * 64]
+    pool3_flat = tf.reshape(pool3, [-1, 8 * 8 * 128])
+
+    print('pool3_flat:{}'.format(pool3_flat.shape))
 
     # Input tensor --> [batch_size, 7 * 7 * 64]
     # Output tensor --> [batch_size, 1024]
-    dense = tf.layers.dense(
-        inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+    dense1 = tf.layers.dense(
+        inputs=pool3_flat, units=1024, activation=tf.nn.relu)
 
-    print('dense')
+    print('dense1:{}'.format(dense1.shape))
 
-    dropout = tf.layers.dropout(
-        inputs=dense, rate=0.3, training=mode == tf.estimator.ModeKeys.TRAIN)
+    dropout1 = tf.layers.dropout(
+        inputs=dense1, rate=0.3, training=mode == tf.estimator.ModeKeys.TRAIN)
 
-    print('dropout')
+    print('dropout1:{}'.format(dropout1.shape))
+
+    dense2 = tf.layers.dense(
+        inputs=dropout1, units=512, activation=tf.nn.relu)
+
+    print('dense2:{}'.format(dense2.shape))
+
+    dropout2 = tf.layers.dropout(
+        inputs=dense2, rate=0.3, training=mode == tf.estimator.ModeKeys.TRAIN)
+
+    print('dropout2:{}'.format(dropout2.shape))
+
+    dense3 = tf.layers.dense(
+        inputs=dropout2, units=256, activation=tf.nn.relu)
+
+    print('dense3:{}'.format(dense3.shape))
+
+    dropout3 = tf.layers.dropout(
+        inputs=dense3, rate=0.3, training=mode == tf.estimator.ModeKeys.TRAIN)
+    
+    print('dropout3:{}'.format(dropout3.shape))
 
     # Input tensor --> [batch_size, 1024]
     # Output tensor --> [batch_size, 10]
-    logits = tf.layers.dense(inputs=dropout, units=10)
-
-    print('logits')
+    logits = tf.layers.dense(inputs=dropout3, units=4)
 
     predictions = {
         'classes': tf.argmax(input=logits, axis=1, name='classes_tensor'),
@@ -78,11 +109,10 @@ def cnn_model_fn(features, labels, mode):
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
-    print(labels.shape, logits.shape)
     loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
         train_op = optimizer.minimize(
             loss=loss, global_step=tf.train.get_global_step())
         return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
@@ -206,5 +236,5 @@ def main(argv):
 if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.INFO)
 
-    with tf.device('/gpu:0'):
+    with tf.device('/device:GPU:0'):
         tf.app.run()
