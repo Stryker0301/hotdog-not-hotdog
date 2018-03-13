@@ -70,7 +70,7 @@ class ImageClassifier:
 
         return estimator.export_savedmodel(
             './model/fruits_classifier', input_receiver_fn, as_text=True)
-
+    
     def _load_data(self, trainPercentage):
 
         trainData = []
@@ -151,7 +151,7 @@ class ImageClassifier:
 
     def _get_label(self, imageDir):
         labelName = imageDir.split('_')[0]
-        label = self._labels[labelName]
+        label = self._labels[labelName] 
 
         return self._labels[labelName]
 

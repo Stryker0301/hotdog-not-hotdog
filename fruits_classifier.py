@@ -1,6 +1,8 @@
 
 
-from __future__ import division, print_function, absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import numpy as np
 import tensorflow as tf
@@ -16,7 +18,7 @@ labels = {'apple': 0,
 
 
 def cnn_model_fn(features, labels, mode):
-    input_layer = tf.reshape(features['x'], [-1, 64, 64, 1])
+    input_layer = tf.reshape(features['x'], [-1, 28, 28, 1])
 
     print('Input Layer:{}'.format(input_layer.shape))
 
@@ -46,22 +48,22 @@ def cnn_model_fn(features, labels, mode):
 
     print('pool2:{}'.format(pool2.shape))
 
-    # Input tensor --> [batch_size, 16, 16, 64]
-    # Output tensor --> [batch_size, 16, 16, 128]
-    conv3 = tf.layers.conv2d(pool2, filters=128,
-                             kernel_size=[5, 5], padding='same', activation=tf.nn.relu)
+    # # Input tensor --> [batch_size, 16, 16, 64]
+    # # Output tensor --> [batch_size, 16, 16, 128]
+    # conv3 = tf.layers.conv2d(pool2, filters=128,
+    #                          kernel_size=[5, 5], padding='same', activation=tf.nn.relu)
 
-    print('conv3:{}'.format(conv3.shape))
+    # print('conv3:{}'.format(conv3.shape))
 
-    # Input tensor --> [batch_size, 16, 16, 128]
-    # Output tensor --> [batch_size, 8, 8, 128]
-    pool3 = tf.layers.max_pooling2d(conv3, pool_size=[2, 2], strides=2)
+    # # Input tensor --> [batch_size, 16, 16, 128]
+    # # Output tensor --> [batch_size, 8, 8, 128]
+    # pool3 = tf.layers.max_pooling2d(conv3, pool_size=[2, 2], strides=2)
 
-    print('pool3:{}'.format(pool3.shape))
+    # print('pool3:{}'.format(pool3.shape))
 
     # Input tensor --> [batch_size, 8, 8, 128]
     # Output tensor --> [batch_size, 7 * 7 * 64]
-    pool3_flat = tf.reshape(pool3, [-1, 8 * 8 * 128])
+    pool3_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
 
     print('pool3_flat:{}'.format(pool3_flat.shape))
 
@@ -153,7 +155,7 @@ def load_data(trainPercentage):
         for trainImage in trainImageList:
             image = misc.imread(os.path.join(
                 FRUIT_IMAGES_DIR, imageDir, trainImage), flatten=True)
-            image = misc.imresize(image, size=(64, 64))
+            image = misc.imresize(image, size=(28, 28))
             image = (image - (255 / 2.0)) / 255
 
             image = np.array(image, dtype='float32').flatten()
@@ -167,7 +169,7 @@ def load_data(trainPercentage):
         for testImage in testImageList:
             image = misc.imread(os.path.join(
                 FRUIT_IMAGES_DIR, imageDir, testImage), flatten=True)
-            image = misc.imresize(image, size=(64, 64))
+            image = misc.imresize(image, size=(28, 28))
 
             image = (image - (255 / 2.0)) / 255
             testData.append(np.array(image, dtype='float32').flatten())
@@ -220,7 +222,7 @@ def main(argv):
     )
 
     mnist_classifier.train(input_fn=train_input_fn,
-                           steps=1000, hooks=[logging_hook])
+                           steps=20000, hooks=[logging_hook])
 
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={'x': eval_data},
